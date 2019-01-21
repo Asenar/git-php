@@ -872,4 +872,45 @@
 			return implode(PHP_EOL, $message);
 		}
 
+		/**
+		 * Returns array of commit metadata from specific commit
+		 * `git show --raw <sha1>`
+		 * @return array
+		 * @throws GitException
+		 */
+		public function getCommitData($commit, $format = 'raw')
+        {
+            $message = $this->getCommitMessage($commit);
+            $subject = $this->getCommitMessage($commit, true);
+            if ($format != 'raw') {
+                throw new GitException("Other format than raw is not supported yet");
+            }
+
+            $this->begin();
+            exec('git show --raw '.$commit.' 2>&1', $output);
+            $this->end();
+            $data = [
+                'commit'  => $commit,
+                'subject' => $subject,
+                'message' => $message,
+            ];
+            // git show is a porcelain command and output format may changes
+            // in future git release or custom config.
+            foreach ($output as $index => $info) {
+                if (preg_match('`Author: *(.*)`', $info, $author)) {
+                    $data['author'] = trim($author[1]);
+                    unset($output[$index]);
+                }
+                if (preg_match('`Commit: *(.*)`', $info, $commiter)) {
+                    $data['commiter'] = trim($commiter[1]);
+                    unset($output[$index]);
+                }
+                if (preg_match('`Date: *(.*)`', $info, $date)) {
+                    $data['date'] = trim($date[1]);
+                    unset($output[$index]);
+                }
+            }
+            return $data;
+        }
+
 	}
