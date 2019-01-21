@@ -850,4 +850,26 @@
 		{
 			return (bool) preg_match('#[/\\\\]|[a-zA-Z]:[/\\\\]|[a-z][a-z0-9+.-]*://#Ai', $path);
 		}
+
+
+		/**
+		 * Returns commit message from specific commit
+		 * `git log -1 --format={%s|%B} )--pretty=format:'%H' -n 1`
+         * @param string $commit commit id
+         * @param boolean $oneline use %s instead of %B if true
+		 * @return string
+		 * @throws GitException
+		 */
+		public function getCommitMessage($commit, $oneline = false)
+		{
+			$this->begin();
+            exec('git log -1 --format='.($oneline?'%s':'%B').' '
+                .$commit
+                .' 2>&1',
+                $message
+                );
+			$this->end();
+			return implode(PHP_EOL, $message);
+		}
+
 	}
